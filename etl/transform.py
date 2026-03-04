@@ -37,6 +37,8 @@ def parse_market_info(title, content=""):
         'description': content
     }
     
+    text = title + " " + content
+    
     # 提取地址
     address_patterns = [
         r'地址[：:]\s*([^\n]+)',
@@ -45,7 +47,7 @@ def parse_market_info(title, content=""):
     ]
     
     for pattern in address_patterns:
-        match = re.search(pattern, title + content)
+        match = re.search(pattern, text)
         if match:
             info['address'] = match.group(1).strip()
             break
@@ -55,10 +57,11 @@ def parse_market_info(title, content=""):
         r'营业时间[：:]\s*([^\n]+)',
         r'⏰\s*([^\n]+)',
         r'时间[：:]\s*([0-9:]+-[0-9:]+)',
+        r'(\d{1,2}:\d{2}\s*[-~]\s*\d{1,2}:\d{2})',
     ]
     
     for pattern in hours_patterns:
-        match = re.search(pattern, title + content)
+        match = re.search(pattern, text)
         if match:
             info['openHours'] = match.group(1).strip()
             break
@@ -77,15 +80,22 @@ def parse_route_info(title, content=""):
         'description': content
     }
     
-    # 提取距离
+    text = title + " " + content
+    
+    # 提取距离（按优先级匹配）
     distance_patterns = [
-        r'(\d+)\s*公里',
-        r'(\d+)\s*km',
-        r'距离[：:]\s*(\d+)',
+        (r'(\d+)\s*公里', 1),
+        (r'(\d+)\s*km', 1),
+        (r'距离\s*[：:]?\s*(\d+)', 1),
+        (r'(\d+)\s*km', re.IGNORECASE),
     ]
     
-    for pattern in distance_patterns:
-        match = re.search(pattern, title + content)
+    for pattern, flags in distance_patterns:
+        if flags == 1:
+            match = re.search(pattern, text)
+        else:
+            match = re.search(pattern, text, flags)
+        
         if match:
             info['distance'] = int(match.group(1))
             break
@@ -95,10 +105,11 @@ def parse_route_info(title, content=""):
         r'时长[：:]\s*([^\n]+)',
         r'用时[：:]\s*([^\n]+)',
         r'(\d+[-~]\d+小时)',
+        r'(\d+小时)',
     ]
     
     for pattern in duration_patterns:
-        match = re.search(pattern, title + content)
+        match = re.search(pattern, text)
         if match:
             info['duration'] = match.group(1).strip()
             break
@@ -107,20 +118,24 @@ def parse_route_info(title, content=""):
     route_patterns = [
         r'路线[：:]\s*([^\n→]+)→([^\n]+)',
         r'从\s*([^\n]+)\s*到\s*([^\n]+)',
+        r'([^\n→]+)→([^\n]+)',
     ]
     
     for pattern in route_patterns:
-        match = re.search(pattern, title + content)
+        match = re.search(pattern, text)
         if match:
             info['startpoint'] = match.group(1).strip()
             info['endpoint'] = match.group(2).strip()
             break
     
-    # 提取难度
-    if '简单' in title or '新手' in title:
+    # 识别难度
+    text_lower = text.lower()
+    if any(kw in text_lower for kw in ['简单', '新手', '入门', '友好']):
         info['difficulty'] = 1
-    elif '困难' in title or '挑战' in title:
+    elif any(kw in text_lower for kw in ['困难', '挑战', '高级', 'expert']):
         info['difficulty'] = 5
+    elif any(kw in text_lower for kw in ['中等', '进阶', '中级']):
+        info['difficulty'] = 3
     
     return info
 
