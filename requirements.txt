@@ -1,0 +1,4 @@
+# 小红书爬虫依赖
+playwright==1.41.0
+pytest==8.0.0
+pytest-asyncio==0.23.0
