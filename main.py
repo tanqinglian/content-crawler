@@ -5,7 +5,15 @@
 
 import asyncio
 import sys
+import os
 from pathlib import Path
+
+# 禁用代理
+os.environ['HTTP_PROXY'] = ''
+os.environ['HTTPS_PROXY'] = ''
+os.environ['http_proxy'] = ''
+os.environ['https_proxy'] = ''
+os.environ['NO_PROXY'] = '*'
 
 # 添加src到路径
 sys.path.insert(0, str(Path(__file__).parent))
