@@ -6,8 +6,15 @@ ETL脚本：从小红书JSON数据导入到MySQL
 import json
 import os
 import re
+import sys
 import mysql.connector
 from datetime import datetime
+
+# 强制UTF-8编码
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # MySQL配置
 MYSQL_CONFIG = {
@@ -15,7 +22,8 @@ MYSQL_CONFIG = {
     'user': 'root',
     'password': 'password',
     'database': 'wuhan_life',
-    'charset': 'utf8mb4'
+    'charset': 'utf8mb4',
+    'port': 3306
 }
 
 def connect_mysql():
